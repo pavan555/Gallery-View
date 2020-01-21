@@ -3,10 +3,10 @@ Implementing an app like Gallery :)
 
 
 
-#Apache License
+# Apache License
 
 
-   Copyright [Sai Pavan Kumar](https://github.com/pavan555) 2020
+   Copyright [Sai Pavan Kumar](https://github.com/pavan555)@2020
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
