@@ -8,4 +8,5 @@
     <color name="grid_label_text_normal">#FFF</color>
     <color name="grid_label_text_selected">#B3FFFFFF</color>
     <color name="grid_foreground_selected">#B3000000</color>
+    <color name="colorSky">#00E5FF</color>
 </resources>

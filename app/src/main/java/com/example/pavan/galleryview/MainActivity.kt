@@ -1,29 +1,30 @@
 package com.example.pavan.galleryview
 
 
-/*
+/* *********************************************************************
 
-   Copyright [Sai Pavan Kumar](https://github.com/pavan555) 2020
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-
-
-
+ * Copyright [Sai Pavan Kumar](https://github.com/pavan555) 2020
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ *********************************************************************
  */
 
 
 
 
+import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -37,6 +38,7 @@ import android.util.Log
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.dragselectrecyclerview.DragSelectTouchListener
@@ -54,15 +56,13 @@ import com.example.pavan.galleryview.Utils.Extensions.color
 import com.example.pavan.galleryview.Utils.Extensions.setLightNavBar
 import com.example.pavan.galleryview.Utils.Extensions.setToast
 import com.example.pavan.galleryview.Utils.asDragSelectReceiver
+import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 
 
 @Suppress("unchecked")
 class MainActivity : AppCompatActivity() {
 
-
-//    val ALPHABET = "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z"
-//            .split(" ")
 
     var filesNames:ArrayList<String> = ArrayList()
     var bitmapArray:ArrayList<Bitmap> = ArrayList()
@@ -82,8 +82,11 @@ class MainActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if(requestCode == 1001)
-            if(grantResults.size>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+            if(grantResults.isNotEmpty() && grantResults[0]==PackageManager.PERMISSION_GRANTED){
                 //do something when permissons are granted
+                getFromSdcard()
+                setDataToApp()
+
             }else{
                 requestPermissions()
             }
@@ -94,17 +97,31 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        setTheme(R.style.SplashTheme)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
 
 
-        requestPermissions()
-        getFromSdcard()
 
         touchListener = DragSelectTouchListener.create(this,
                 dataSource.asDragSelectReceiver()){
             this.mode=Mode.PATH }
+
+        if(ContextCompat.checkSelfPermission(this,Manifest.permission.WRITE_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
+            requestPermissions()
+        }else{
+            getFromSdcard()
+            setDataToApp()
+        }
+        setLightNavBar()
+    }
+
+
+
+    private fun setDataToApp(){
+
 
         dataSource.set(filesNames
                 .dropLastWhile { it.isEmpty() }
@@ -135,8 +152,15 @@ class MainActivity : AppCompatActivity() {
         }
         list.addOnItemTouchListener(touchListener)
 
-        setLightNavBar()
+        runOnUiThread{
+            Thread.sleep(1000)
+            constraintLayout.setBackgroundColor(this.color(R.color.colorPrimary))
+        }
+
+
+
     }
+
 
 
 
@@ -182,11 +206,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestPermissions(){
         val permissions=ArrayList<String>()
-        if(ActivityCompat.checkSelfPermission(this,android.Manifest.permission.WRITE_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
-            permissions.add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        if(ActivityCompat.checkSelfPermission(this,Manifest.permission.WRITE_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
+            permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
-        if(ActivityCompat.checkSelfPermission(this,android.Manifest.permission.READ_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
-            permissions.add(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        if(ActivityCompat.checkSelfPermission(this,Manifest.permission.READ_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
         if(permissions.size != 0)
             ActivityCompat.requestPermissions(this,permissions.toTypedArray(),1001)
