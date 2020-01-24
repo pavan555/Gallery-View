@@ -26,12 +26,13 @@ package com.example.pavan.galleryview
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
@@ -51,13 +52,17 @@ import com.afollestad.recyclical.datasource.emptySelectableDataSource
 import com.afollestad.recyclical.setup
 import com.afollestad.recyclical.viewholder.isSelected
 import com.afollestad.recyclical.withItem
-import com.example.pavan.galleryview.Utils.BitmapHelper.decodeBitmapFromFile
 import com.example.pavan.galleryview.Utils.Extensions.color
 import com.example.pavan.galleryview.Utils.Extensions.setLightNavBar
 import com.example.pavan.galleryview.Utils.Extensions.setToast
 import com.example.pavan.galleryview.Utils.asDragSelectReceiver
+import com.nostra13.universalimageloader.core.ImageLoader
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration
+import com.nostra13.universalimageloader.core.assist.ImageSize
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 @Suppress("unchecked")
@@ -76,7 +81,6 @@ class MainActivity : AppCompatActivity() {
     private var activeCab: AttachedCab? = null
 
     private val list by lazy { findViewById<RecyclerView>(R.id.listItems) }
-
 
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -103,6 +107,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
 
+        ImageLoader.getInstance().init(ImageLoaderConfiguration.createDefault(this))
 
 
         touchListener = DragSelectTouchListener.create(this,
@@ -146,7 +151,16 @@ class MainActivity : AppCompatActivity() {
                     }
                     itemSquare.foreground=foreground
                 }
-                onClick { toggleSelection() }
+                onClick {
+                    if(isSelected() || hasSelection()){
+                        toggleSelection()
+                    } else {
+                        val intent = Intent(this@MainActivity, ShowImagesActivity::class.java)
+                        intent.putStringArrayListExtra("fileNames", filesNames)
+                        intent.putExtra("clickedItemIndex",Integer.valueOf(it.toString()))
+                        startActivity(intent)
+                    }
+                }
                 onLongClick { touchListener.setIsActive(true,it) }
             }
         }
@@ -166,18 +180,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun setImagetoImageView(imageView: ImageView,imagePath:String,index:Int){
 
-        if(index >= bitmapArray.size){
-            Log.i("BITMAPS","ENTERED INTO IMAGEFILE")
-            val imgFile = File("$path/$imagePath")
-            if (imgFile.exists()) {
-                 val myBitmap = decodeBitmapFromFile(imgFile.absolutePath,50,50)
-                 bitmapArray.add(index, myBitmap!!)
-                 imageView.setImageBitmap(myBitmap)
-            }
+        val imageLoader = ImageLoader.getInstance()
+        val imgFile = File("$path/$imagePath")
+        imageLoader.displayImage(Uri.fromFile(imgFile).toString(),imageView, ImageSize(100,100))
 
-        }else{
-            imageView.setImageBitmap(bitmapArray.get(index))
-        }
     }
 
 
@@ -189,16 +195,16 @@ class MainActivity : AppCompatActivity() {
         val files = directory.listFiles { dir, name -> name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") }
         Log.i("FILE PATHS","$path ${files!!.size}")
 
+        Arrays.sort(files) { o1, o2 ->
+            o1.lastModified().compareTo(o2.lastModified())
+        }
+        files.reverse()
         if(files.isNotEmpty()){
         for (file in files){
             filesNames.add(file.name)
-            val myBitmap = decodeBitmapFromFile("$path/${file.name}",100,100)
-            bitmapArray.add(myBitmap!!)
-
          }
         }else{
             filesNames.add("No Images")
-            bitmapArray.add(BitmapFactory.decodeResource(resources,R.drawable.ic_not_interested_black_24dp))
         }
 
     }

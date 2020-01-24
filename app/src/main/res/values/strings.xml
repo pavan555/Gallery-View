@@ -4,5 +4,6 @@
     <string name="done">Done</string>
     <string name="range_selection">Range Selection</string>
     <string name="path_selection">Path Selection</string>
+    <string name="descr_image">Image</string>
 
 </resources>

@@ -28,13 +28,10 @@ dependencies {
 
     implementation 'com.afollestad:drag-select-recyclerview:2.4.0'
     implementation 'com.afollestad:recyclical:1.1.1'
-
     implementation 'com.afollestad:material-cab:2.0.1'
-    implementation "com.afollestad.rxkprefs:core:2.0.3"
-    implementation "com.afollestad.rxkprefs:rxjava:2.0.3"
 
+    implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
 
-    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
 
 
     testImplementation 'junit:junit:4.12'
