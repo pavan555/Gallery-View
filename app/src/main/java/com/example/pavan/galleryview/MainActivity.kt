@@ -158,7 +158,7 @@ class MainActivity : AppCompatActivity() {
                         val intent = Intent(this@MainActivity, ShowImagesActivity::class.java)
                         intent.putStringArrayListExtra("fileNames", filesNames)
                         intent.putExtra("clickedItemIndex",Integer.valueOf(it.toString()))
-                        startActivity(intent)
+                        startActivityForResult(intent,2902)
                     }
                 }
                 onLongClick { touchListener.setIsActive(true,it) }
@@ -199,6 +199,7 @@ class MainActivity : AppCompatActivity() {
             o1.lastModified().compareTo(o2.lastModified())
         }
         files.reverse()
+        filesNames.clear()
         if(files.isNotEmpty()){
         for (file in files){
             filesNames.add(file.name)
@@ -270,6 +271,34 @@ class MainActivity : AppCompatActivity() {
         if(!activeCab.destroy())
             super.onBackPressed()
     }
+
+
+    override fun onDestroy() {
+        ImageLoader.getInstance().clearMemoryCache()
+        ImageLoader.getInstance().clearDiskCache()
+        super.onDestroy()
+
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if(requestCode==2902){
+
+            if(ShowImagesActivity.fileNames.size!=filesNames.size){
+
+                getFromSdcard()
+                dataSource.set(filesNames
+                        .dropLastWhile { it.isEmpty() }
+                        .map(::MyItem)
+                )
+                list.adapter!!.notifyDataSetChanged()
+            }
+            list.layoutManager!!.scrollToPosition(ShowImagesActivity.currentPosition)
+
+
+        }
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+
 
 
 

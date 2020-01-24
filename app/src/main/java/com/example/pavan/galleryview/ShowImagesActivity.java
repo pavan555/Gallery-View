@@ -22,11 +22,11 @@
 package com.example.pavan.galleryview;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +35,7 @@ import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
@@ -47,6 +48,7 @@ import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 
+import java.io.File;
 import java.util.ArrayList;
 
 
@@ -54,6 +56,12 @@ public class ShowImagesActivity extends AppCompatActivity {
 
 
     static ArrayList<String> fileNames=new ArrayList<>();
+    public static int currentPosition;
+    public ViewPager viewPager;
+    ImagePagerAdapter imagePagerAdapter;
+    final static String PATH = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath()+"/Camera/";
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,17 +72,36 @@ public class ShowImagesActivity extends AppCompatActivity {
         fileNames=getIntent().getStringArrayListExtra("fileNames");
         int clickedIndex = getIntent().getIntExtra("clickedItemIndex", 0);
 
-        Log.i("TAG", clickedIndex +" index");
+        currentPosition=clickedIndex;
 
-        ViewPager viewPager=findViewById(R.id.viewPager);
-        viewPager.setAdapter(new ImagePagerAdapter(this));
+        viewPager=findViewById(R.id.viewPager);
+        imagePagerAdapter=new ImagePagerAdapter(this);
+        viewPager.setAdapter(imagePagerAdapter);
         viewPager.setCurrentItem(clickedIndex);
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                //when page is scrolling this method will be called
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                //when page is selected this method will be called once
+                currentPosition=position;
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
 
     }
 
+
     public static   class ImagePagerAdapter extends PagerAdapter {
         private static final ArrayList<String> imageFileNames=ShowImagesActivity.fileNames;
-        String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath()+"/Camera/";
 
 
         LayoutInflater layoutInflater;
@@ -109,7 +136,7 @@ public class ShowImagesActivity extends AppCompatActivity {
             ImageView imageView=imageLayout.findViewById(R.id.itemImagePager);
             final ProgressBar progressBar=imageLayout.findViewById(R.id.loading);
 
-            ImageLoader.getInstance().displayImage("file://"+path+fileNames.get(position), imageView, options, new ImageLoadingListener() {
+            ImageLoader.getInstance().displayImage("file://"+PATH+fileNames.get(position), imageView, options, new ImageLoadingListener() {
                 @Override
                 public void onLoadingStarted(String imageUri, View view) {
                     progressBar.setVisibility(View.VISIBLE);
@@ -176,10 +203,64 @@ public class ShowImagesActivity extends AppCompatActivity {
             super.restoreState(state, loader);
         }
 
+        public void removeView(int index) {
+            imageFileNames.remove(index);
+            notifyDataSetChanged();
+        }
+
         @Nullable
         @Override
         public Parcelable saveState() {
             return super.saveState();
         }
+    }
+
+
+    public void delete(final View view) {
+
+        new AlertDialog.Builder(view.getContext())
+                .setTitle("Are You Sure?")
+                .setIcon(R.drawable.ic_delete)
+                .setCancelable(false)
+                .setPositiveButton("yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final File file=new File(PATH+fileNames.get(currentPosition));
+                        fileNames.remove(currentPosition);
+                        imagePagerAdapter.notifyDataSetChanged();
+                        if(file.exists()){
+                            if(file.delete()) {
+                                Extensions.INSTANCE.setToast(view.getContext(), "deleted successfully");
+                                imagePagerAdapter.removeView(currentPosition);
+                                /*this is where update occurs*/
+                                viewPager.setAdapter(imagePagerAdapter);
+                                viewPager.setCurrentItem(currentPosition + 1, true);
+                            }else{
+                                Extensions.INSTANCE.setToast(view.getContext(),"not deleted");
+                            }
+                        }else{
+                            Extensions.INSTANCE.setToast(view.getContext(),"file not exists");
+                        }
+                    }
+                })
+                .setNegativeButton("no",null)
+                .show();
+
+
+    }
+
+
+
+    @Override
+    public void onBackPressed() {
+        finish();
+        super.onBackPressed();
+    }
+
+    @Override
+    protected void onDestroy() {
+        ImageLoader.getInstance().clearMemoryCache();
+        ImageLoader.getInstance().clearDiskCache();
+        super.onDestroy();
     }
 }
