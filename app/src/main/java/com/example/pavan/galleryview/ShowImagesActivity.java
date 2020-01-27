@@ -30,7 +30,6 @@ import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
@@ -47,6 +46,7 @@ import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
+import com.ortiz.touchview.TouchImageView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -109,7 +109,6 @@ public class ShowImagesActivity extends AppCompatActivity {
         Context context;
 
 
-
         public ImagePagerAdapter(Context context) {
             this.context=context;
             layoutInflater=LayoutInflater.from(context);
@@ -133,7 +132,7 @@ public class ShowImagesActivity extends AppCompatActivity {
             assert imageLayout!=null;
 
 
-            ImageView imageView=imageLayout.findViewById(R.id.itemImagePager);
+            TouchImageView imageView=imageLayout.findViewById(R.id.itemImagePager);
             final ProgressBar progressBar=imageLayout.findViewById(R.id.loading);
 
             ImageLoader.getInstance().displayImage("file://"+PATH+fileNames.get(position), imageView, options, new ImageLoadingListener() {
@@ -195,6 +194,7 @@ public class ShowImagesActivity extends AppCompatActivity {
 
         @Override
         public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
+            ((TouchImageView)view.findViewById(R.id.itemImagePager)).resetZoom();
             return view.equals(object);
         }
 
