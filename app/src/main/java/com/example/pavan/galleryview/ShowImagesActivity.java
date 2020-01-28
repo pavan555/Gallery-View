@@ -24,6 +24,7 @@ package com.example.pavan.galleryview;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
@@ -40,6 +41,7 @@ import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import com.example.pavan.galleryview.Utils.Extensions;
+import com.google.android.material.snackbar.Snackbar;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -97,6 +99,7 @@ public class ShowImagesActivity extends AppCompatActivity {
             }
         });
 
+        viewPager.setOffscreenPageLimit(1);
     }
 
 
@@ -107,6 +110,7 @@ public class ShowImagesActivity extends AppCompatActivity {
         LayoutInflater layoutInflater;
         DisplayImageOptions options;
         Context context;
+        boolean refresh;
 
 
         public ImagePagerAdapter(Context context) {
@@ -203,9 +207,27 @@ public class ShowImagesActivity extends AppCompatActivity {
             super.restoreState(state, loader);
         }
 
-        public void removeView(int index) {
-            imageFileNames.remove(index);
+        @Override
+        public int getItemPosition(@NonNull Object object) {
+
+            if(refresh){
+                refresh=false;
+                return POSITION_NONE;
+            }
+
+            return super.getItemPosition(object);
+        }
+
+        public void refreshAdapter(){
+            refresh = true;
             notifyDataSetChanged();
+        }
+
+
+        public void removeView(int index) {
+
+            imageFileNames.remove(index);
+            refreshAdapter();
         }
 
         @Nullable
@@ -225,21 +247,52 @@ public class ShowImagesActivity extends AppCompatActivity {
                 .setPositiveButton("yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        final File file=new File(PATH+fileNames.get(currentPosition));
-                        fileNames.remove(currentPosition);
-                        imagePagerAdapter.notifyDataSetChanged();
-                        if(file.exists()){
-                            if(file.delete()) {
-                                Extensions.INSTANCE.setToast(view.getContext(), "deleted successfully");
-                                imagePagerAdapter.removeView(currentPosition);
-                                /*this is where update occurs*/
-                                viewPager.setAdapter(imagePagerAdapter);
-                                viewPager.setCurrentItem(currentPosition + 1, true);
-                            }else{
-                                Extensions.INSTANCE.setToast(view.getContext(),"not deleted");
-                            }
-                        }else{
-                            Extensions.INSTANCE.setToast(view.getContext(),"file not exists");
+                        final File file = new File(PATH + fileNames.get(currentPosition));
+                        final int removedPos;
+                        if(currentPosition==fileNames.size()-1)
+                            removedPos = currentPosition-1;
+                        else
+                            removedPos=currentPosition;
+
+                        if (file.exists()) {
+                            fileNames.remove(currentPosition);
+                            imagePagerAdapter.removeView(currentPosition);
+                            /*this is where update occurs*/
+//                            viewPager.setAdapter(imagePagerAdapter);
+
+                            Snackbar snackbar = Snackbar.make(view.getRootView(), "Deleted", Snackbar.LENGTH_LONG);
+                            snackbar.setAction("UNDO !?", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    fileNames.add(removedPos, file.getName());
+                                    imagePagerAdapter.refreshAdapter();
+//                                    viewPager.setAdapter(imagePagerAdapter);
+                                    viewPager.setCurrentItem(removedPos, true);
+                                }
+                            });
+                            snackbar.addCallback(new Snackbar.Callback() {
+                                @Override
+                                public void onDismissed(Snackbar transientBottomBar, int event) {
+
+                                    if(event==Snackbar.Callback.DISMISS_EVENT_TIMEOUT) {
+                                        if (!file.delete()) {
+                                            Extensions.INSTANCE.setToast(view.getContext(), "not deleted");
+                                        }
+                                    }
+                                    super.onDismissed(transientBottomBar, event);
+                                }
+
+                                @Override
+                                public void onShown(Snackbar sb) {
+                                    super.onShown(sb);
+                                }
+                            });
+                            snackbar.setActionTextColor(Color.YELLOW);
+                            snackbar.show();
+
+
+                        } else {
+                            Extensions.INSTANCE.setToast(view.getContext(), "file not exists");
                         }
                     }
                 })
