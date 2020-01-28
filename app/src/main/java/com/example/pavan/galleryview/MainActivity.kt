@@ -37,6 +37,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import android.widget.ImageView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -54,7 +55,6 @@ import com.afollestad.recyclical.viewholder.isSelected
 import com.afollestad.recyclical.withItem
 import com.example.pavan.galleryview.Utils.Extensions.color
 import com.example.pavan.galleryview.Utils.Extensions.setLightNavBar
-import com.example.pavan.galleryview.Utils.Extensions.setToast
 import com.example.pavan.galleryview.Utils.asDragSelectReceiver
 import com.nostra13.universalimageloader.core.ImageLoader
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration
@@ -107,6 +107,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
 
+
         ImageLoader.getInstance().init(ImageLoaderConfiguration.createDefault(this))
 
 
@@ -140,7 +141,6 @@ class MainActivity : AppCompatActivity() {
                 onBind(::MyItemViewHolder){index: Int, item: MyItem ->
                     itemText!!.text=item.letter
                     setImagetoImageView(imageView,item.letter,index)
-//                    itemSquare.setBackgroundColor(Color.parseColor("#03A9F4"))
                     var context: Context = itemView.context
                     var foreground:Drawable ?= null
                     if(isSelected()){
@@ -152,7 +152,7 @@ class MainActivity : AppCompatActivity() {
                     itemSquare.foreground=foreground
                 }
                 onClick {
-                    if(isSelected() || hasSelection()){
+                    if(hasSelection()){
                         toggleSelection()
                     } else {
                         val intent = Intent(this@MainActivity, ShowImagesActivity::class.java)
@@ -234,7 +234,7 @@ class MainActivity : AppCompatActivity() {
                 activeCab=createCab(R.id.select_dialog_toolbar){
                     menu(R.menu.when_selected)
                     closeDrawable(android.R.drawable.ic_menu_close_clear_cancel)
-                    titleColor(literal = Color.GREEN)
+                    titleColor(literal = Color.YELLOW)
                     title(literal = getString(R.string.select_items,count))
 
 
@@ -242,11 +242,33 @@ class MainActivity : AppCompatActivity() {
                         if(it.itemId == R.id.done) {
                             val selectionString = (0 until dataSource.size())
                                     .filter { index -> dataSource.isSelectedAt(index) }
-                                    .joinToString()
-                            dataSource.deselectAll()
-//                            Log.e("SELECTED", "$selectionString count")
-                            setToast("Selected Letters:$selectionString")
-                            dataSource.deselectAll()
+
+                            AlertDialog.Builder(this@MainActivity)
+                                    .setTitle("Are You Sure?")
+                                    .setIcon(R.drawable.ic_delete)
+                                    .setCancelable(false)
+                                    .setPositiveButton("yes") { dialog, which ->
+
+                                        val removingFileNames: ArrayList<String> = ArrayList()
+
+                                        for (f in selectionString) {
+                                            removingFileNames.add(filesNames[f])
+                                        }
+
+                                        filesNames.removeAll(removingFileNames)
+                                        updateDataSource()
+                                        dataSource.deselectAll()
+
+                                        for(f in removingFileNames){
+                                            File(path,f).delete()
+                                        }
+
+                                    }
+                                    .setNegativeButton("no") { dialog, which ->
+                                        dataSource.deselectAll()
+                                    }
+                                    .show()
+
                             true
                         }else
                             false
@@ -265,6 +287,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         }
+
+    private fun updateDataSource() {
+        dataSource.set(filesNames
+                .dropLastWhile { it.isEmpty() }
+                .map(::MyItem)
+        )
+        list.adapter!!.notifyDataSetChanged()
+    }
+
 
 
     override fun onBackPressed() {
