@@ -6,5 +6,6 @@
     <string name="path_selection">Path Selection</string>
     <string name="descr_image">Image</string>
     <string name="delete">Delete</string>
+    <string name="share">Share</string>
 
 </resources>
