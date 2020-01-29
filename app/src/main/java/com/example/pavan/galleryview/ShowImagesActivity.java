@@ -23,14 +23,17 @@ package com.example.pavan.galleryview;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
@@ -64,12 +67,16 @@ public class ShowImagesActivity extends AppCompatActivity {
     final static String PATH = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath()+"/Camera/";
 
 
+    Button shareButton;
+    Button deleteButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_images);
 
+        shareButton=findViewById(R.id.share);
+        deleteButton=findViewById(R.id.delete);
 
         fileNames=getIntent().getStringArrayListExtra("fileNames");
         int clickedIndex = getIntent().getIntExtra("clickedItemIndex", 0);
@@ -77,7 +84,7 @@ public class ShowImagesActivity extends AppCompatActivity {
         currentPosition=clickedIndex;
 
         viewPager=findViewById(R.id.viewPager);
-        imagePagerAdapter=new ImagePagerAdapter(this);
+        imagePagerAdapter=new ImagePagerAdapter(this,fileNames);
         viewPager.setAdapter(imagePagerAdapter);
         viewPager.setCurrentItem(clickedIndex);
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -104,17 +111,17 @@ public class ShowImagesActivity extends AppCompatActivity {
 
 
     public static   class ImagePagerAdapter extends PagerAdapter {
-        private static final ArrayList<String> imageFileNames=ShowImagesActivity.fileNames;
+        private ArrayList<String> imageFileNames;
 
 
         LayoutInflater layoutInflater;
         DisplayImageOptions options;
         Context context;
-        boolean refresh;
 
 
-        public ImagePagerAdapter(Context context) {
+        public ImagePagerAdapter(Context context,ArrayList<String> imageFileNames) {
             this.context=context;
+            this.imageFileNames=imageFileNames;
             layoutInflater=LayoutInflater.from(context);
             options=new DisplayImageOptions.Builder()
                     .showImageForEmptyUri(R.drawable.ic_empty)
@@ -207,27 +214,12 @@ public class ShowImagesActivity extends AppCompatActivity {
             super.restoreState(state, loader);
         }
 
-        @Override
-        public int getItemPosition(@NonNull Object object) {
-
-            if(refresh){
-                refresh=false;
-                return POSITION_NONE;
-            }
-
-            return super.getItemPosition(object);
-        }
-
-        public void refreshAdapter(){
-            refresh = true;
-            notifyDataSetChanged();
-        }
 
 
         public void removeView(int index) {
 
             imageFileNames.remove(index);
-            refreshAdapter();
+            notifyDataSetChanged();
         }
 
         @Nullable
@@ -248,26 +240,18 @@ public class ShowImagesActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         final File file = new File(PATH + fileNames.get(currentPosition));
-                        final int removedPos;
-                        if(currentPosition==fileNames.size()-1)
-                            removedPos = currentPosition-1;
-                        else
-                            removedPos=currentPosition;
+                        final int removedPos=currentPosition;
 
                         if (file.exists()) {
                             fileNames.remove(currentPosition);
-                            imagePagerAdapter.removeView(currentPosition);
-                            /*this is where update occurs*/
-//                            viewPager.setAdapter(imagePagerAdapter);
+                            updateView(removedPos);
 
                             Snackbar snackbar = Snackbar.make(view.getRootView(), "Deleted", Snackbar.LENGTH_LONG);
                             snackbar.setAction("UNDO !?", new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
                                     fileNames.add(removedPos, file.getName());
-                                    imagePagerAdapter.refreshAdapter();
-//                                    viewPager.setAdapter(imagePagerAdapter);
-                                    viewPager.setCurrentItem(removedPos, true);
+                                    updateView(removedPos);
                                 }
                             });
                             snackbar.addCallback(new Snackbar.Callback() {
@@ -302,7 +286,38 @@ public class ShowImagesActivity extends AppCompatActivity {
 
     }
 
+    public void share(View view) {
 
+        shareButton.setClickable(false);
+        deleteButton.setClickable(false);
+        final Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("image/jpg");
+        final File photoFile = new File(PATH+fileNames.get(currentPosition));
+        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(photoFile));
+        startActivityForResult(Intent.createChooser(shareIntent, "Share image using"),2244);
+    }
+
+
+    public void updateView(int pos){
+        viewPager.setAdapter(null);
+        imagePagerAdapter=new ImagePagerAdapter(ShowImagesActivity.this,fileNames);
+        viewPager.setAdapter(imagePagerAdapter);
+        viewPager.setCurrentItem(pos, true);
+    }
+
+
+
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if(requestCode==2244){
+
+            shareButton.setClickable(true);
+            deleteButton.setClickable(true);
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
 
     @Override
     public void onBackPressed() {
