@@ -25,7 +25,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
@@ -38,6 +37,7 @@ import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
@@ -277,9 +277,23 @@ public class ShowImagesActivity extends AppCompatActivity {
         shareButton.setClickable(false);
         deleteButton.setClickable(false);
         final Intent shareIntent = new Intent(Intent.ACTION_SEND);
-        shareIntent.setType("image/jpg");
+        shareIntent.setType("image/*");
         final File photoFile = new File(PATH+fileNames.get(currentPosition));
-        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(photoFile));
+        shareIntent.putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", photoFile));
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        /*
+
+        ******* TEMPORARY SOLUTION WHICH WORKS ONLY BELOW ANDROID VERSION 10 ************************
+                if(Build.VERSION.SDK_INT>=24){
+                    try {
+                        Method m = StrictMode.class.getMethod("disableDeathOnFileUriExposure");
+                        m.invoke(null);
+                    }catch (Exception e){
+                            e.printStackTrace();
+                    }
+                }
+        ***********************************************************************************************/
+
         startActivityForResult(Intent.createChooser(shareIntent, "Share image using"),2244);
     }
 
