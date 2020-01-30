@@ -244,7 +244,7 @@ class MainActivity : AppCompatActivity() {
                                     .filter { index -> dataSource.isSelectedAt(index) }
 
                             AlertDialog.Builder(this@MainActivity)
-                                    .setTitle("Are You Sure?")
+                                    .setTitle("Are you sure you want to delete these images?")
                                     .setIcon(R.drawable.ic_delete)
                                     .setCancelable(false)
                                     .setPositiveButton("yes") { dialog, which ->

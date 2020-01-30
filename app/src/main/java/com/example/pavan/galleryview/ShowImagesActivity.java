@@ -22,7 +22,6 @@
 package com.example.pavan.galleryview;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -38,7 +37,6 @@ import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
@@ -216,11 +214,6 @@ public class ShowImagesActivity extends AppCompatActivity {
 
 
 
-        public void removeView(int index) {
-
-            imageFileNames.remove(index);
-            notifyDataSetChanged();
-        }
 
         @Nullable
         @Override
@@ -232,57 +225,50 @@ public class ShowImagesActivity extends AppCompatActivity {
 
     public void delete(final View view) {
 
-        new AlertDialog.Builder(view.getContext())
-                .setTitle("Are You Sure?")
-                .setIcon(R.drawable.ic_delete)
-                .setCancelable(false)
-                .setPositiveButton("yes", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        final File file = new File(PATH + fileNames.get(currentPosition));
-                        final int removedPos=currentPosition;
+        final File file = new File(PATH + fileNames.get(currentPosition));
+        final int removedPos = currentPosition;
 
-                        if (file.exists()) {
-                            fileNames.remove(currentPosition);
-                            updateView(removedPos);
+        deleteButton.setClickable(false);
+        if (file.exists()) {
+            fileNames.remove(currentPosition);
+            updateView(removedPos);
 
-                            Snackbar snackbar = Snackbar.make(view.getRootView(), "Deleted", Snackbar.LENGTH_LONG);
-                            snackbar.setAction("UNDO !?", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    fileNames.add(removedPos, file.getName());
-                                    updateView(removedPos);
-                                }
-                            });
-                            snackbar.addCallback(new Snackbar.Callback() {
-                                @Override
-                                public void onDismissed(Snackbar transientBottomBar, int event) {
+            Snackbar snackbar = Snackbar.make(view.getRootView(), "Deleted", Snackbar.LENGTH_LONG);
+            snackbar.setAction("UNDO !?", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    fileNames.add(removedPos, file.getName());
+                    updateView(removedPos);
+                    deleteButton.setClickable(true);
+                }
+            });
+            snackbar.addCallback(new Snackbar.Callback() {
+                @Override
+                public void onDismissed(Snackbar transientBottomBar, int event) {
 
-                                    if(event==Snackbar.Callback.DISMISS_EVENT_TIMEOUT) {
-                                        if (!file.delete()) {
-                                            Extensions.INSTANCE.setToast(view.getContext(), "not deleted");
-                                        }
-                                    }
-                                    super.onDismissed(transientBottomBar, event);
-                                }
+                    if (event == Snackbar.Callback.DISMISS_EVENT_TIMEOUT) {
+                        if (!file.delete()) {
+                            Extensions.INSTANCE.setToast(view.getContext(), "not deleted");
 
-                                @Override
-                                public void onShown(Snackbar sb) {
-                                    super.onShown(sb);
-                                }
-                            });
-                            snackbar.setActionTextColor(Color.YELLOW);
-                            snackbar.show();
-
-
-                        } else {
-                            Extensions.INSTANCE.setToast(view.getContext(), "file not exists");
                         }
-                    }
-                })
-                .setNegativeButton("no",null)
-                .show();
+                        deleteButton.setClickable(true);
 
+                    }
+                    super.onDismissed(transientBottomBar, event);
+                }
+
+                @Override
+                public void onShown(Snackbar sb) {
+                    super.onShown(sb);
+                }
+            });
+            snackbar.setActionTextColor(Color.YELLOW);
+            snackbar.show();
+
+
+        } else {
+            Extensions.INSTANCE.setToast(view.getContext(), "file not exists");
+        }
 
     }
 
