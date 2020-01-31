@@ -246,7 +246,7 @@ public class ShowImagesActivity extends AppCompatActivity {
                 @Override
                 public void onDismissed(Snackbar transientBottomBar, int event) {
 
-                    if (event == Snackbar.Callback.DISMISS_EVENT_TIMEOUT) {
+                    if (event == Snackbar.Callback.DISMISS_EVENT_TIMEOUT || event == DISMISS_EVENT_MANUAL) {
                         if (!file.delete()) {
                             Extensions.INSTANCE.setToast(view.getContext(), "not deleted");
 
@@ -280,6 +280,8 @@ public class ShowImagesActivity extends AppCompatActivity {
         shareIntent.setType("image/*");
         final File photoFile = new File(PATH+fileNames.get(currentPosition));
         shareIntent.putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", photoFile));
+        shareIntent.putExtra(Intent.EXTRA_TEXT, "Shared Via ImageGallery App. Download now.");
+
         shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         /*
 
@@ -321,6 +323,7 @@ public class ShowImagesActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+
         finish();
         super.onBackPressed();
     }
