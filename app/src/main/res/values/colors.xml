@@ -11,4 +11,5 @@
     <color name="colorSky">#00E5FF</color>
     <color name="colorGreen">#66ff00</color>
     <color name="colorRed">#F00000</color>
+    <color name="colorYellow">#ffcc33</color>
 </resources>

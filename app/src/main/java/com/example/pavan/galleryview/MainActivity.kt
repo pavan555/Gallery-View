@@ -202,7 +202,8 @@ class MainActivity : AppCompatActivity() {
         filesNames.clear()
         if(files.isNotEmpty()){
         for (file in files){
-            filesNames.add(file.name)
+            if (file.exists())
+                filesNames.add(file.name)
          }
         }else{
             filesNames.add("No Images")
@@ -312,16 +313,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if(requestCode==2902){
+        if (requestCode == 2902) {
+
 
             if(ShowImagesActivity.fileNames.size!=filesNames.size){
 
-                getFromSdcard()
-                dataSource.set(filesNames
-                        .dropLastWhile { it.isEmpty() }
-                        .map(::MyItem)
-                )
-                list.adapter!!.notifyDataSetChanged()
+                filesNames.clear()
+                filesNames = ShowImagesActivity.fileNames
+                updateDataSource()
             }
             list.layoutManager!!.scrollToPosition(ShowImagesActivity.currentPosition)
 

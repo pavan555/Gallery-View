@@ -24,7 +24,6 @@ package com.example.pavan.galleryview;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
@@ -32,11 +31,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
@@ -234,7 +235,7 @@ public class ShowImagesActivity extends AppCompatActivity {
             updateView(removedPos);
 
             Snackbar snackbar = Snackbar.make(view.getRootView(), "Deleted", Snackbar.LENGTH_LONG);
-            snackbar.setAction("UNDO !?", new View.OnClickListener() {
+            snackbar.setAction("Undo", new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     fileNames.add(removedPos, file.getName());
@@ -242,6 +243,9 @@ public class ShowImagesActivity extends AppCompatActivity {
                     deleteButton.setClickable(true);
                 }
             });
+            FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) snackbar.getView().getLayoutParams();
+            layoutParams.setMargins(5, layoutParams.topMargin + 5, 5, layoutParams.bottomMargin + 5);
+            snackbar.getView().setLayoutParams(layoutParams);
             snackbar.addCallback(new Snackbar.Callback() {
                 @Override
                 public void onDismissed(Snackbar transientBottomBar, int event) {
@@ -262,7 +266,7 @@ public class ShowImagesActivity extends AppCompatActivity {
                     super.onShown(sb);
                 }
             });
-            snackbar.setActionTextColor(Color.YELLOW);
+            snackbar.setActionTextColor(ContextCompat.getColor(ShowImagesActivity.this, R.color.colorYellow));
             snackbar.show();
 
 
@@ -324,7 +328,7 @@ public class ShowImagesActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 
-        finish();
+        finishActivity(2902);
         super.onBackPressed();
     }
 
